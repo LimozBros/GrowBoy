@@ -15,55 +15,45 @@ int pushLeft = digitalRead(buttonLeft);
 int pushRight = digitalRead(buttonRight);
 int pushOK = digitalRead(buttonOK);
 
-int startHour = 0;
-int startMin = 0;
-int baseHour = 0;
-int baseMin = 0;
-int Mode1Hour = 0;
-int Mode1Min = 0;
-
-int a = 0;  // cursor position
+int startHour = 0;  // used to save hour
+int startMin = 0;   // used to save min
+int baseHour = 0;   // current time (hour)
+int baseMin = 0;    // current time (min)
+int Mode1Hour = 0;  // Mode1 start time (hour)
+int Mode1Min = 0;   // Mode1 start time (min)
 
 //--------------------SETUP--------------------//
 void setup() {
 
-  pinMode(buttonUp, INPUT_PULLUP);  // button open = HIGH, button pressed = LOW
-  pinMode(buttonDown, INPUT_PULLUP);
-  pinMode(buttonLeft, INPUT_PULLUP);
-  pinMode(buttonRight, INPUT_PULLUP);
-  pinMode(buttonOK, INPUT_PULLUP);
+  pinMode(buttonUp, INPUT_PULLUP);      // set the 5 button pins as INPUT_PULLUP
+  pinMode(buttonDown, INPUT_PULLUP);    
+  pinMode(buttonLeft, INPUT_PULLUP);    // button open = HIGH, button pressed = LOW
+  pinMode(buttonRight, INPUT_PULLUP);   
+  pinMode(buttonOK, INPUT_PULLUP);      
 
   Serial.begin(9600);
 
   lcd.begin(16, 2);
-  //lcd.blink();
 
   welcome();
   delay(5000);
 
-  setUhrzeit();
-  baseHour = startHour;
-  baseMin = startMin;
-  startHour = 0;
-  startMin = 0;
-  setTime(baseHour,baseMin,0,3,3,2017);
+  setUhrzeit();                             // SET CURRENT TIME
+  baseHour = startHour;                     // save baseHour
+  baseMin = startMin;                       // save baseMin
+  startHour = 0;                            // reset startHour
+  startMin = 0;                             // reset startMin
+  setTime(baseHour,baseMin,0,3,3,2017);     // set Arduino time to user settings (*date must be added*)
   delay(1000);
 
-  setMode1();
+  setMode1();                               // SET MODE1 STARTING TIME
   Mode1Hour = startHour;
   Mode1Min = startMin;
   startHour = 0;
   startMin = 0;
   delay(1000);
-
-  //setMode2();
-  //delay(1000);
-  //setCustom1();
-  //delay(1000);
-  //setCustom2();
-
-  //delay(1000);
-  lcd.clear();
+  
+  lcd.clear();                              // message at the end of setup
   lcd.setCursor(0, 0);
   lcd.print("SUCCESS!");
   delay(2500);
@@ -71,30 +61,65 @@ void setup() {
 
 //--------------------LOOP--------------------//
 void loop() {
+  
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Hour");
-  lcd.setCursor(0, 1);
-  printToLCD(hour());
+  lcd.setCursor(0, 0);                 // prints the following on LCD screen:
+  lcd.print("Hour");                    
+  lcd.setCursor(0, 1);                 // Hour
+  printToLCD(hour());                  // 00:00 (current time)
   lcd.print(":");
   printToLCD(minute());
-  delay(5000);
-  lcd.clear();
-  lcd.setCursor(0, 0);
+  delay(5000);                       
+  
+  lcd.clear();                        
+  lcd.setCursor(0, 0);                // prints the following on LCD screen:
   lcd.print("HourMode1");
-  lcd.setCursor(0, 1);
-  printToLCD(Mode1Hour);
+  lcd.setCursor(0, 1);                // HourMode1
+  printToLCD(Mode1Hour);              // 00:00 (Mode1 starting time set by user)
   lcd.print(":");
   printToLCD(Mode1Min);
   delay(5000);
 }
 
+
+
+//--------------------WELCOME--------------------//
+void welcome() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WELCOME!");
+  lcd.setCursor(0, 1);
+  lcd.print("SETUP starting");
+}
+
+
+
 //--------------------SETUHRZEIT--------------------//
-void setUhrzeit() {
+void setUhrzeit() {                                       // SET CURRENT TIME
   pushOK = digitalRead(buttonOK);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Set time:");
+  while (pushOK == HIGH) {                                // push buttonOK to save the displayed hour and go to setMin
+    setHour();
+  }
+  delay(500);
+  pushOK = digitalRead(buttonOK);
+  while (pushOK == HIGH) {                                // push buttonOK to save the displayed minute and proceed
+    setMin();
+  }
+  delay(500);
+}
+
+
+
+//--------------------SETMODE1--------------------//
+void setMode1() {                                        // SET MODE1
+  pushOK = digitalRead(buttonOK);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Set mode1:");
+  lcd.setCursor(0, 1);
   while (pushOK == HIGH) {
     setHour();
   }
@@ -106,10 +131,12 @@ void setUhrzeit() {
   delay(500);
 }
 
+
+
 //--------------------SETHOUR--------------------//
-void setHour() {
-  if (digitalRead(buttonUp) == LOW) {
-    if (startHour == 23) {
+void setHour() {                                      // Set hour (00-23)
+  if (digitalRead(buttonUp) == LOW) {                 // If buttonUp is pressed, the hour variable is increased by 1
+    if (startHour == 23) {                            // If buttonDown is pressed, the hour variable is decreased by 1
       startHour = 0;
     }
     else {
@@ -132,10 +159,12 @@ void setHour() {
   delay(200);
 }
 
+
+
 //--------------------SETMIN--------------------//
-void setMin() {
-  if (digitalRead(buttonUp) == LOW) {
-    if (startMin == 59) {
+void setMin() {                                       // Set minute (00-59)
+  if (digitalRead(buttonUp) == LOW) {                 // If buttonUp is pressed, the minute value is increased by 1
+    if (startMin == 59) {                             // If buttonDown is pressed, the minute value is decreased by 1
       startMin = 00;
     }
     else {
@@ -158,103 +187,15 @@ void setMin() {
   delay(200);
 }
 
-//--------------------SCROLL--------------------//
-void scroll(int a) {
-  if (digitalRead(buttonRight) == LOW) {
-    if (a = 15) {
-      a = 0;
-    }
-    else {
-      a++;
-    }
-  }
-  if (digitalRead(buttonLeft) == LOW) {
-    if (a = 0) {
-      a = 15;
-    }
-    else {
-      a--;
-    }
-  }
-  delay(200);
-}
 
-//--------------------WELCOME--------------------//
-void welcome() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("WELCOME!");
-  lcd.setCursor(0, 1);
-  lcd.print("SETUP starting");
-}
-
-//--------------------SETMODE1--------------------//
-void setMode1() {
-  pushOK = digitalRead(buttonOK);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Set mode1:");
-  lcd.setCursor(0, 1);
-  while (pushOK == HIGH) {
-    setHour();
-  }
-  delay(500);
-  pushOK = digitalRead(buttonOK);
-  while (pushOK == HIGH) {
-    setMin();
-  }
-  delay(500);
-}
-
-//--------------------SETMODE2--------------------//
-void setMode2() {
-
-}
-
-//--------------------SETCUSTOM1--------------------//
-void setCustom1() {
-
-}
-
-//--------------------SETCUSTOM2--------------------//
-void setCustom2() {
-
-}
-
-//--------------------PRINTTOSERIAL--------------------//
-void printToSerial() {
-  pushUp = digitalRead(buttonUp);
-  pushDown = digitalRead(buttonDown);
-  pushLeft = digitalRead(buttonLeft);
-  pushRight = digitalRead(buttonRight);
-  pushOK = digitalRead(buttonOK);
-  Serial.print("buttonOK: ");
-  Serial.print(pushOK);
-  Serial.print(", ");
-  Serial.print("buttonUp: ");
-  Serial.print(pushUp);
-  Serial.print(", ");
-  Serial.print("buttonDown: ");
-  Serial.print(pushDown);
-  Serial.print(", ");
-  Serial.print("buttonLeft: ");
-  Serial.print(pushLeft);
-  Serial.print(", ");
-  Serial.print("buttonRight: ");
-  Serial.print(pushRight);
-  Serial.print(", time: ");
-  Serial.print(baseHour);
-  Serial.print(":");
-  Serial.println(baseMin);
-}
 
 //--------------------PRINTTOLCD--------------------//
-void printToLCD(int a) {
-  if (a < 10) {
-    lcd.print("0");
-    lcd.print(a);
-  }
-  else {
+void printToLCD(int a) {                                // Print the following to LCD:
+  if (a < 10) {                                         //  a if a >= 10
+    lcd.print("0");                                     //  0a if a < 10 
+    lcd.print(a);                                       //
+  }                                                     // This way hour and minute are always aligned on the LCD display
+  else {                                                // (otherwise you could read 0:0 instead of 00:00)
     lcd.print(a);
   }
 }
